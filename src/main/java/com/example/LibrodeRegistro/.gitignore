@@ -1,0 +1,24 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Maven
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Logs
+*.log
+
+# Archivos de datos de aplicación
+*.db
+*.sqlite
+
+# Otros
+.DS_Store
+*.jar
+*.war
+*.ear
