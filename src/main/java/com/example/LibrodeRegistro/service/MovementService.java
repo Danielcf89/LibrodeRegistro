@@ -1,4 +1,3 @@
-// MovementService.java
 package com.example.LibrodeRegistro.service;
 
 import com.example.LibrodeRegistro.dto.MovementRequest;
@@ -79,6 +78,43 @@ public class MovementService {
         return convertToDto(savedMovement);
     }
 
+    // Actualiza un movimiento existente
+    @Transactional
+    public MovementResponse updateMovement(Long id, MovementRequest request) {
+        User currentUser = getCurrentUser();
+
+        Movement movement = movementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Movimiento no encontrado"));
+
+        // Verificar que el movimiento pertenezca al usuario
+        if (!movement.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("No tienes permiso para modificar este movimiento");
+        }
+
+        // Validación básica de los campos actualizados
+        validateUpdateMovementRequest(request);
+
+        // Actualizar campos
+        if (request.getAmount() != null) {
+            movement.setAmount(request.getAmount());
+        }
+        if (request.getDate() != null) {
+            movement.setDate(request.getDate());
+        }
+        if (request.getDescription() != null) {
+            movement.setDescription(request.getDescription());
+        }
+        if (request.getType() != null) {
+            movement.setType(request.getType());
+        }
+        if (request.getCategory() != null) {
+            movement.setCategory(request.getCategory());
+        }
+
+        Movement updatedMovement = movementRepository.save(movement);
+        return convertToDto(updatedMovement);
+    }
+
     // Convierte entidad a DTO
     private MovementResponse convertToDto(Movement movement) {
         MovementResponse response = new MovementResponse();
@@ -99,7 +135,7 @@ public class MovementService {
                 .orElseThrow(() -> new RuntimeException("Usuario no autenticado"));
     }
 
-    // Validación básica de los datos del movimiento
+    // Validación básica de los datos del movimiento para creación
     private void validateMovementRequest(MovementRequest request) {
         if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("El monto debe ser un valor positivo");
@@ -111,6 +147,14 @@ public class MovementService {
 
         if (request.getDate() == null) {
             throw new IllegalArgumentException("La fecha es requerida");
+        }
+    }
+
+    // Validación básica para actualización
+    private void validateUpdateMovementRequest(MovementRequest request) {
+        // Si se proporciona amount, debe ser positivo
+        if (request.getAmount() != null && request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("El monto debe ser un valor positivo");
         }
     }
 }

@@ -30,4 +30,13 @@ public class MovementController {
         MovementResponse response = movementService.createMovement(request);
         return ResponseEntity.ok(response);
     }
+    // MovementController.java
+    @PutMapping("/{id}")
+    public ResponseEntity<MovementResponse> updateMovement(
+            @PathVariable Long id,
+            @RequestBody MovementRequest request) {
+
+        MovementResponse response = movementService.updateMovement(id, request);
+        return ResponseEntity.ok(response);
+    }
 }
