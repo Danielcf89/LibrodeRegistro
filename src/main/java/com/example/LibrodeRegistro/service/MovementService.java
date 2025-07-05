@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,6 +58,14 @@ public class MovementService {
 
         return ingresos.subtract(gastos);
     }
+    public BigDecimal getTotalByTypeBeforeDate(Long userId, MovementType type, LocalDate fechaCorte) {
+        return movementRepository.getTotalByTypeBeforeDate(userId, type, fechaCorte);
+    }
+
+    public BigDecimal getTotalByTypeInMonth(Long userId, MovementType type, int mes, int anio) {
+        return movementRepository.getTotalByTypeInMonth(userId, type, mes, anio);
+    }
+
 
     // Crea un nuevo movimiento
     @Transactional
@@ -157,4 +166,14 @@ public class MovementService {
             throw new IllegalArgumentException("El monto debe ser un valor positivo");
         }
     }
+
+    public BigDecimal getTotalIngresos(Long userId, Integer mes, Integer anio) {
+        return movementRepository.getTotalByTypeInMonth(userId, MovementType.INGRESO, mes, anio);
+    }
+
+    public BigDecimal getTotalGastos(Long userId, Integer mes, Integer anio) {
+        return movementRepository.getTotalByTypeInMonth(userId, MovementType.GASTO, mes, anio);
+    }
+
+
 }
