@@ -31,13 +31,7 @@ public class PiggyMovement {
     @JoinColumn(name = "piggy_bank_id")
     private PiggyBank piggyBank;
 
-    public MovementType getType() {
-        return type;
-    }
 
-    public String getCategory() {
-        return category;
-    }
 }
 
 

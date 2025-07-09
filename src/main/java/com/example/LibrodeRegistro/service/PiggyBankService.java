@@ -3,7 +3,9 @@ package com.example.LibrodeRegistro.service;
 import com.example.LibrodeRegistro.dto.MovementRequest;
 import com.example.LibrodeRegistro.dto.PiggyBankRequest;
 import com.example.LibrodeRegistro.dto.PiggyBankResponse;
+import com.example.LibrodeRegistro.dto.PiggyMovementDto;
 import com.example.LibrodeRegistro.dto.PiggyMovementResponse;
+import com.example.LibrodeRegistro.entity.MovementType;
 import com.example.LibrodeRegistro.entity.PiggyBank;
 import com.example.LibrodeRegistro.entity.PiggyMovement;
 import com.example.LibrodeRegistro.entity.User;
@@ -64,28 +66,32 @@ public class PiggyBankService {
                     ? restante.divide(BigDecimal.valueOf(semanas), 2, BigDecimal.ROUND_HALF_UP)
                     : restante;
 
-            dto.setMontoRecomendadoSemanal(recomendado.max(BigDecimal.ZERO)); // Evita valores negativos
+            dto.setMontoRecomendadoSemanal(recomendado.max(BigDecimal.ZERO));
         } else {
             dto.setMontoRecomendadoSemanal(BigDecimal.ZERO);
         }
         dto.setTotalAhorrado(piggyBank.getTotalAhorrado());
         dto.setMontoFaltante(piggyBank.getMontoFaltante());
         dto.setSemanasRestantes(piggyBank.getSemanasRestantes());
-
-        dto.setMovimientos(
-                piggyBank.getMovimientos().stream().map(m -> {
-                    PiggyMovementResponse mr = new PiggyMovementResponse();
-                    mr.setAmount(m.getAmount());
-                    mr.setDate(m.getDate());
-                    mr.setDescription(m.getDescription());
-                    mr.setType(m.getType());
-                    mr.setCategory(m.getCategory());
-                    return mr;
-                }).collect(Collectors.toList())
-        );
-
         return dto;
     }
+
+    public PiggyBankResponse mapToDtoWithMovements(PiggyBank piggyBank) {
+        PiggyBankResponse dto = mapToDto(piggyBank);
+        List<PiggyMovementResponse> movimientos = piggyBank.getMovimientos().stream().map(mov -> {
+            PiggyMovementResponse movResp = new PiggyMovementResponse();
+            movResp.setId(mov.getId());
+            movResp.setAmount(mov.getAmount());
+            movResp.setDate(mov.getDate());
+            movResp.setDescription(mov.getDescription());
+            movResp.setType(mov.getType());
+            movResp.setCategory(mov.getCategory());
+            return movResp;
+        }).collect(Collectors.toList());
+        dto.setMovimientos(movimientos);
+        return dto;
+    }
+
 
     public PiggyBankResponse crearAlcancia(PiggyBankRequest request) {
         PiggyBank piggyBank = new PiggyBank();
@@ -125,8 +131,9 @@ public class PiggyBankService {
     }
 
     public PiggyBankResponse obtenerDetalleAlcancia(Long id) {
-        return mapToDto(validateOwnership(id));
+        return mapToDtoWithMovements(validateOwnership(id));
     }
+
 
     public void eliminarAlcancia(Long id) {
         piggyBankRepository.delete(validateOwnership(id));
@@ -144,12 +151,17 @@ public class PiggyBankService {
         retiro.setAmount(request.getAmount().negate());
         retiro.setDate(request.getDate());
         retiro.setDescription(request.getDescription());
+        retiro.setType(request.getType());
+        retiro.setCategory(request.getCategory());
         retiro.setPiggyBank(piggy);
         piggyMovementRepository.save(retiro);
 
         piggy.getMovimientos().add(retiro);
+
+        // ✅ Usar el DTO sin movimientos
         return mapToDto(piggyBankRepository.save(piggy));
     }
+
 
     public PiggyBank depositToPiggyBank(Long piggyBankId, MovementRequest request) {
         PiggyBank piggyBank = validateOwnership(piggyBankId);
@@ -158,6 +170,8 @@ public class PiggyBankService {
         movement.setAmount(request.getAmount());
         movement.setDate(request.getDate());
         movement.setDescription(request.getDescription());
+        movement.setType(request.getType());
+        movement.setCategory(request.getCategory());
         movement.setPiggyBank(piggyBank);
         piggyMovementRepository.save(movement);
 
@@ -178,6 +192,31 @@ public class PiggyBankService {
         piggy.getMovimientos().add(retiro);
         return mapToDto(piggyBankRepository.save(piggy));
     }
+
+    public PiggyBank getPiggyBankEntity(Long id) {
+        return validateOwnership(id);
+    }
+
+    public List<PiggyMovementResponse> filtrarMovimientos(Long id, MovementType tipo, LocalDate desde, LocalDate hasta) {
+        PiggyBank piggy = validateOwnership(id);
+
+        return piggy.getMovimientos().stream()
+                .filter(mov -> tipo == null || mov.getType() == tipo)
+                .filter(mov -> desde == null || !mov.getDate().isBefore(desde))
+                .filter(mov -> hasta == null || !mov.getDate().isAfter(hasta))
+                .map(mov -> {
+                    PiggyMovementResponse dto = new PiggyMovementResponse();
+                    dto.setId(mov.getId());
+                    dto.setAmount(mov.getAmount());
+                    dto.setDate(mov.getDate());
+                    dto.setDescription(mov.getDescription());
+                    dto.setType(mov.getType());
+                    dto.setCategory(mov.getCategory());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
 }
 
 
