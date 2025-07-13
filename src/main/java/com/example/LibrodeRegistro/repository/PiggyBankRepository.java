@@ -22,5 +22,8 @@ public interface PiggyBankRepository extends JpaRepository<PiggyBank, Long> {
     Optional<PiggyBank> findByIdWithMovimientos(@Param("id") Long id);
 
 
+
+
+
 }
 

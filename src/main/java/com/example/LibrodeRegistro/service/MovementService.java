@@ -3,6 +3,7 @@ package com.example.LibrodeRegistro.service;
 import com.example.LibrodeRegistro.dto.MovementRequest;
 import com.example.LibrodeRegistro.dto.MovementResponse;
 import com.example.LibrodeRegistro.dto.PiggyMovementResponse;
+import com.example.LibrodeRegistro.dto.ResumenFinancieroDTO;
 import com.example.LibrodeRegistro.entity.*;
 import com.example.LibrodeRegistro.repository.MovementRepository;
 import com.example.LibrodeRegistro.repository.UserRepository;
@@ -15,7 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -200,5 +204,35 @@ public class MovementService {
     public BigDecimal getTotalByTypeInMonth(Long userId, MovementType type, int mes, int anio) {
         return movementRepository.getTotalByTypeInMonth(userId, type, mes, anio);
     }
+
+    public ResumenFinancieroDTO obtenerResumenFinanciero() {
+        BigDecimal ingresos = Optional.ofNullable(movementRepository.sumarIngresos()).orElse(BigDecimal.ZERO);
+        BigDecimal gastos = Optional.ofNullable(movementRepository.sumarGastos()).orElse(BigDecimal.ZERO);
+
+
+        Map<String, BigDecimal> detalle = new LinkedHashMap<>();
+        List<Object[]> resultados = movementRepository.sumarPorCategoria();
+        for (Object[] fila : resultados) {
+            String categoria = (String) fila[0];
+            BigDecimal monto = (BigDecimal) fila[1];
+            detalle.put(categoria, monto);
+        }
+
+        return new ResumenFinancieroDTO(ingresos, gastos, detalle);
+
+    }
+    public Map<String, BigDecimal> getTotalByCategoryInMonth(Long userId, MovementType tipo, int mes, int anio) {
+        List<Object[]> resultados = movementRepository.sumarPorCategoriaYMes(userId, tipo, mes, anio);
+        Map<String, BigDecimal> mapa = new LinkedHashMap<>();
+        for (Object[] fila : resultados) {
+            String categoria = (String) fila[0];
+            BigDecimal monto = (BigDecimal) fila[1];
+            mapa.put(categoria, monto);
+        }
+        return mapa;
+    }
+
+
+
 
 }

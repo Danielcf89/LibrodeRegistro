@@ -53,4 +53,29 @@ public interface MovementRepository extends JpaRepository<Movement, Long> {
                                            @Param("mesFin") int mesFin,
                                            @Param("anio") int anio);
 
+
+    @Query("SELECT SUM(m.amount) FROM Movement m WHERE m.type = 'INGRESO'")
+    BigDecimal sumarIngresos();
+
+    @Query("SELECT SUM(m.amount) FROM Movement m WHERE m.type = 'GASTO'")
+    BigDecimal sumarGastos();
+
+    @Query("SELECT m.category, SUM(m.amount) FROM Movement m GROUP BY m.category")
+    List<Object[]> sumarPorCategoria();
+
+
+
+    @Query("SELECT m.category, SUM(m.amount) FROM Movement m " +
+            "WHERE m.user.id = :userId AND m.type = :tipo " +
+            "AND MONTH(m.date) = :mes AND YEAR(m.date) = :anio " +
+            "GROUP BY m.category")
+    List<Object[]> sumarPorCategoriaYMes(@Param("userId") Long userId,
+                                         @Param("tipo") MovementType tipo,  // ✔️ CORRECTO
+                                         @Param("mes") int mes,
+                                         @Param("anio") int anio);
+
+
+
+
+
 }

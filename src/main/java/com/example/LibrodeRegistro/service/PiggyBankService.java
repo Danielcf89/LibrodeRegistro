@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -216,6 +217,14 @@ public class PiggyBankService {
                 })
                 .collect(Collectors.toList());
     }
+
+    public BigDecimal obtenerTotalAlcancias() {
+        return piggyBankRepository.findByUser(getCurrentUser()).stream()
+                .map(PiggyBank::getTotalAhorrado)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+
 
 }
 
