@@ -42,6 +42,15 @@ public interface MovementRepository extends JpaRepository<Movement, Long> {
             @Param("anio") int anio
     );
 
-    @Query("SELECT COALESCE(SUM(m.amount), 0) FROM Movement m WHERE m.user = :user AND m.type = :type")
+    @Query("SELECT SUM(m.amount) FROM Movement m WHERE m.user = :user AND m.type = :type")
     Optional<BigDecimal> sumAmountByUserAndType(@Param("user") User user, @Param("type") MovementType type);
+
+
+    @Query("SELECT SUM(m.amount) FROM Movement m WHERE m.user.id = :userId AND m.type = :type AND MONTH(m.date) BETWEEN :mesInicio AND :mesFin AND YEAR(m.date) = :anio")
+    BigDecimal getTotalByTypeBetweenMonths(@Param("userId") Long userId,
+                                           @Param("type") MovementType type,
+                                           @Param("mesInicio") int mesInicio,
+                                           @Param("mesFin") int mesFin,
+                                           @Param("anio") int anio);
+
 }

@@ -2,10 +2,12 @@ package com.example.LibrodeRegistro.service;
 
 import com.example.LibrodeRegistro.dto.MovementRequest;
 import com.example.LibrodeRegistro.dto.MovementResponse;
+import com.example.LibrodeRegistro.dto.PiggyMovementResponse;
 import com.example.LibrodeRegistro.entity.*;
 import com.example.LibrodeRegistro.repository.MovementRepository;
 import com.example.LibrodeRegistro.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -62,8 +64,8 @@ public class MovementService {
         return movementRepository.getTotalByTypeBeforeDate(userId, type, fechaCorte);
     }
 
-    public BigDecimal getTotalByTypeInMonth(Long userId, MovementType type, int mes, int anio) {
-        return movementRepository.getTotalByTypeInMonth(userId, type, mes, anio);
+    public BigDecimal getTotalByTypeBetweenMonths(Long userId, MovementType type, int mesInicio, int mesFin, int anio) {
+        return movementRepository.getTotalByTypeBetweenMonths(userId, type, mesInicio, mesFin, anio);
     }
 
 
@@ -137,7 +139,7 @@ public class MovementService {
     }
 
     // Obtiene usuario autenticado
-    private User getCurrentUser() {
+    public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         return userRepository.findByUsername(username)
@@ -174,6 +176,29 @@ public class MovementService {
     public BigDecimal getTotalGastos(Long userId, Integer mes, Integer anio) {
         return movementRepository.getTotalByTypeInMonth(userId, MovementType.GASTO, mes, anio);
     }
+    public List<PiggyMovementResponse> filtrarMovimientos(MovementType tipo, LocalDate desde, LocalDate hasta) {
+        List<Movement> movimientos = movementRepository.findAll();
 
+        return movimientos.stream()
+                .filter(m -> tipo == null || m.getType() == tipo)
+                .filter(m -> desde == null || !m.getDate().isBefore(desde))
+                .filter(m -> hasta == null || !m.getDate().isAfter(hasta))
+                .map(mov -> {
+                    PiggyMovementResponse dto = new PiggyMovementResponse();
+                    dto.setId(mov.getId());
+                    dto.setAmount(mov.getAmount());
+                    dto.setDate(mov.getDate());
+                    dto.setDescription(mov.getDescription());
+                    dto.setType(mov.getType());
+                    dto.setCategory(mov.getCategory());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+
+    public BigDecimal getTotalByTypeInMonth(Long userId, MovementType type, int mes, int anio) {
+        return movementRepository.getTotalByTypeInMonth(userId, type, mes, anio);
+    }
 
 }
